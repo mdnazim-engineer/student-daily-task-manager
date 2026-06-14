@@ -1,6 +1,6 @@
 body {
         font-family: 'Inter', sans-serif;
-        background-color: #fffff2;
+        background-color: #fffff4;
         transition: background-color 0.3s, color 0.3s;
         -webkit-tap-highlight-color: transparent;
         }
