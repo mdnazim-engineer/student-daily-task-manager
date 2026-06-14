@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academix - Premium Student Daily Task Manager </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        student: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body class="text-slate-800 dark:text-slate-100 min-h-screen flex flex-col pb-12">
+
+    <!-- Outer Container (Optimized for Mobile-First, fits up to tablet/desktop gracefully) -->
+    <div class="w-full max-w-lg md:max-w-xl mx-auto px-4 py-6 flex-grow flex flex-col gap-5">
+
+        <!-- ==========================================
+             1. HEADER: Branding, Theme, Auto Date & Calendar Strip
+             ========================================== -->
+        <header
+            class="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 premium-shadow transition-all">
+            <!-- Brand & Theme Toggle -->
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1
+                        class="text-2xl font-extrabold bg-gradient-to-r from-student-600 to-indigo-500 bg-clip-text text-transparent flex items-center gap-2">
+                        <i class="fa-solid fa-graduation-cap text-student-600"></i> Academix
+                    </h1>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Manage Tasks. Track Progress. Achieve
+                        Goals.</p>
+                </div>
+                <!-- Theme Toggle Button (Touch Friendly 44x44px target) -->
+                <button id="theme-toggle"
+                    class="w-11 h-11 flex items-center justify-center bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-amber-400 rounded-2xl transition-all cursor-pointer"
+                    aria-label="Toggle Theme">
+                    <i class="fa-solid fa-moon text-lg" id="theme-icon"></i>
+                </button>
+            </div>
+
+            <!-- Auto-date & Interactive Custom Calendar Trigger -->
+            <div
+                class="flex items-center justify-between bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-100/50 dark:border-slate-800 mb-4">
+                <div class="flex flex-col">
+                    <span
+                        class="text-[10px] font-bold text-student-600 dark:text-student-200 uppercase tracking-wider">
+                        Today's Date</span>
+                    <span id="current-date" class="text-sm font-semibold text-slate-700 dark:text-slate-200">Loading
+                        today...</span>
+                </div>
+                <!-- Custom Date Picker Trigger (Auto-synced Calendar Icon) -->
+                <div class="relative flex items-center">
+                    <label for="calendar-picker"
+                        class="w-10 h-10 flex items-center justify-center bg-student-100 dark:bg-slate-800 hover:bg-student-200 text-student-600 dark:text-student-200 rounded-xl cursor-pointer transition-all"
+                        title="Select custom date">
+                        <i class="fa-solid fa-calendar-days text-sm"></i>
+                    </label>
+                    <input type="date" id="calendar-picker" class="absolute inset-0 opacity-0 w-10 h-10 cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Weekly Strip: Slide-able Weekdays to instantly filter tasks by day -->
+            <div class="mb-2">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Filter by Date
+                        </span>
+                    <button id="reset-date-filter"
+                        class="text-[10px] text-student-600 dark:text-student-200 font-bold hover:underline hidden">Show
+                        All Days</button>
+                </div>
+                <!-- Flex strip of 7 days -->
+                <div class="flex justify-between gap-1 overflow-x-auto no-scrollbar py-1" id="calendar-strip">
+                    <!-- Loaded dynamically via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Goal Achievement Progress Bar -->
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div class="flex justify-between text-xs font-bold mb-1.5">
+                    <span class="text-slate-500 dark:text-slate-400">Day's Completion Rate</span>
+                    <span id="progress-percent" class="text-student-600 dark:text-student-200">0%</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-850 h-2.5 rounded-full overflow-hidden">
+                    <div id="progress-bar"
+                        class="bg-gradient-to-r from-student-500 to-emerald-400 h-full w-0 rounded-full transition-all duration-500">
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ==========================================
+             2. POMODORO STUDY TIMER (Integrated productivity tool - Now User Customizable)
+             ========================================== -->
+        <section
+            class="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 premium-shadow transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <h3
+                    class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-hourglass-half text-student-600 animate-pulse"></i> Study Schedule Timer
+                </h3>
+                <span
+                    class="text-[10px] font-bold px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-700 uppercase"
+                    id="timer-mode-badge">Study Session</span>
+            </div>
+
+            <!-- Custom User Configuration Input Panel (Highly touch friendly + / - buttons) -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <!-- Custom Focus Mins -->
+                <div
+                    class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-850 flex flex-col gap-1">
+                    <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Study Duration
+                        </span>
+                    <div class="flex items-center justify-between">
+                        <button type="button" onclick="adjustCustomDuration('study', -5)"
+                            class="w-7 h-7 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-center font-bold active:scale-90 transition-all select-none">-5</button>
+                        <input type="number" id="study-minutes-input" value="25" min="1" max="180"
+                            class="w-12 text-center bg-transparent font-bold text-sm outline-none text-slate-800 dark:text-slate-100">
+                        <button type="button" onclick="adjustCustomDuration('study', 5)"
+                            class="w-7 h-7 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-center font-bold active:scale-90 transition-all select-none">+5</button>
+                    </div>
+                </div>
+
+                <!-- Custom Break Mins -->
+                <div
+                    class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-850 flex flex-col gap-1">
+                    <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Break Duration
+                        </span>
+                    <div class="flex items-center justify-between">
+                        <button type="button" onclick="adjustCustomDuration('break', -1)"
+                            class="w-7 h-7 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-center font-bold active:scale-90 transition-all select-none">-1</button>
+                        <input type="number" id="break-minutes-input" value="5" min="1" max="60"
+                            class="w-12 text-center bg-transparent font-bold text-sm outline-none text-slate-800 dark:text-slate-100">
+                        <button type="button" onclick="adjustCustomDuration('break', 1)"
+                            class="w-7 h-7 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-center font-bold active:scale-90 transition-all select-none">+1</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Action Set Triggers -->
+            <div class="grid grid-cols-2 gap-2.5 mb-4">
+                <button onclick="applyTimerPreset('study')"
+                    class="py-2 px-3 bg-student-100 hover:bg-student-200 dark:bg-student-950/30 dark:hover:bg-student-950/50 text-student-700 dark:text-student-200 rounded-xl transition-all font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95">
+                    <i class="fa-solid fa-brain text-xs"></i> Apply Study Duration
+                </button>
+                <button onclick="applyTimerPreset('break')"
+                    class="py-2 px-3 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-xl transition-all font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95">
+                    <i class="fa-solid fa-mug-hot text-xs"></i> Apply Break Duration
+                </button>
+            </div>
+
+            <!-- Main Countdown Display -->
+            <div
+                class="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100/50 dark:border-slate-850">
+                <div class="flex flex-col">
+                    <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Time
+                        Remaining</span>
+                    <span id="timer-display"
+                        class="text-3.5xl font-extrabold font-mono tracking-wider text-slate-800 dark:text-slate-200">25:00</span>
+                </div>
+
+                <!-- Action trigger buttons (Touch optimized, 44x44px minimum) -->
+                <div class="flex items-center gap-2">
+                    <button id="timer-start"
+                        class="w-12 h-12 bg-student-600 hover:bg-student-700 text-white rounded-2xl transition-all cursor-pointer shadow-sm active:scale-95 flex items-center justify-center"
+                        aria-label="Start Timer">
+                        <i class="fa-solid fa-play text-sm"></i>
+                    </button>
+                    <button id="timer-reset"
+                        class="w-12 h-12 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl transition-all cursor-pointer flex items-center justify-center"
+                        aria-label="Reset Timer">
+                        <i class="fa-solid fa-rotate-left text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             3. MAIN SECTION: Task Creation Form & Workspaces
+             ========================================== -->
+        <main class="flex flex-col gap-5">
+
+            <!-- Quick Quote Motivator Card -->
+            <div
+                class="p-4 bg-gradient-to-r from-student-500/10 to-indigo-500/10 dark:from-student-900/20 dark:to-slate-900/40 rounded-3xl border border-student-100/40 dark:border-slate-800 flex gap-3.5 items-start">
+                <div class="text-xl">💡</div>
+                <div>
+                    <h4 class="text-[10px] font-bold text-student-600 dark:text-student-200 uppercase tracking-widest">
+                        Daily Student Inspiration</h4>
+                    <p id="motivational-quote"
+                        class="text-xs text-slate-600 dark:text-slate-300 italic mt-0.5 font-medium">"The secret of
+                        getting ahead is getting started."</p>
+                </div>
+            </div>
+
+            <!-- Task Form Card Panel -->
+            <section
+                class="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 premium-shadow transition-all">
+                <h2
+                    class="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-plus text-student-600"></i> Create New Academic Task
+                </h2>
+
+                <form id="task-form" class="space-y-4">
+                    <!-- Task Input -->
+                    <div>
+                        <label for="task-title-input"
+                            class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">Task
+                            Title</label>
+                        <input type="text" id="task-title-input"
+                            class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-sm focus:border-student-500 dark:focus:border-student-500 transition-all text-slate-800 dark:text-slate-100 placeholder-slate-400"
+                            placeholder="Enter your task...." required autocomplete="off">
+                    </div>
+
+                    <!-- Row details (Touch optimized dropdowns) -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- Category Input -->
+                        <div>
+                            <label for="task-category"
+                                class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">Task Category
+                                </label>
+                            <select id="task-category"
+                                class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-xs focus:border-student-500 transition-all text-slate-700 dark:text-slate-300 cursor-pointer">
+                                <option value="Assignment">📚 Assignment</option>
+                                <option value="Exam Prep">✍️ Exam Prep</option>
+                                <option value="Project">💻 Project</option>
+                                <option value="Lab Work">🧪 Lab Work</option>
+                                <option value="Self Study">📖 Self Study</option>
+                                <option value="Extra">🏃 Extra-Curricular</option>
+                            </select>
+                        </div>
+
+                        <!-- Priority Input -->
+                        <div>
+                            <label for="task-priority"
+                                class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">Priority
+                                Level</label>
+                            <select id="task-priority"
+                                class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-xs focus:border-student-500 transition-all text-slate-700 dark:text-slate-300 cursor-pointer">
+                                <option value="high">🔥 High Priority</option>
+                                <option value="medium" selected>⚡ Medium Priority</option>
+                                <option value="low">🌱 Low Priority</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Due Date Input (Calendar and Time) -->
+                    <div>
+                        <label for="task-date"
+                            class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">Task Date
+                            </label>
+                        <input type="datetime-local" id="task-date"
+                            class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-xs focus:border-student-500 transition-all text-slate-700 dark:text-slate-300 cursor-pointer"
+                            placeholder="DD/MM/YYYY">
+                    </div>
+
+                    <!-- Submit Button (48px high for superb mobile thumb accessibility) -->
+                    <button type="submit"
+                        class="w-full py-3.5 bg-gradient-to-r from-student-600 to-indigo-600 hover:from-student-700 hover:to-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                        id="form-submit-btn">
+                        <i class="fa-solid fa-circle-plus"></i> <span id="submit-btn-text">Add to Academic Tasks</span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Search & Filters Cards Section -->
+            <section
+                class="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 premium-shadow transition-all flex flex-col gap-3">
+                <!-- Search Box with Clear Icon -->
+                <div class="relative">
+                    <i
+                        class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="search-input"
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-xs focus:border-student-500 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400"
+                        placeholder="Search your tasks...">
+                </div>
+
+                <!-- Horizontal Slideable Filtration Tabs -->
+                <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                    <button
+                        class="tab-btn active text-[10px] uppercase tracking-wider px-4 py-2.5 bg-student-50 text-student-600 border border-student-100 dark:bg-slate-800 dark:border-slate-700 dark:text-student-200 rounded-xl font-bold whitespace-nowrap transition-all"
+                        data-filter="all">All (<span id="count-all">0</span>)</button>
+                    <button
+                        class="tab-btn text-[10px] uppercase tracking-wider px-4 py-2.5 bg-slate-50 text-slate-500 hover:text-slate-700 dark:bg-slate-950 dark:text-slate-400 rounded-xl font-bold whitespace-nowrap transition-all"
+                        data-filter="active">Pending (<span id="count-active">0</span>)</button>
+                    <button
+                        class="tab-btn text-[10px] uppercase tracking-wider px-4 py-2.5 bg-slate-50 text-slate-500 hover:text-slate-700 dark:bg-slate-950 dark:text-slate-400 rounded-xl font-bold whitespace-nowrap transition-all"
+                        data-filter="completed">Completed (<span id="count-completed">0</span>)</button>
+                </div>
+            </section>
+
+            <!-- Active Calendar Filter Tag Indicator -->
+            <div id="active-calendar-indicator"
+                class="hidden items-center justify-between bg-student-100/60 dark:bg-slate-850 px-4 py-2.5 rounded-2xl border border-student-200/50 dark:border-slate-800 text-xs text-student-700 dark:text-student-200 font-semibold animate-scale">
+                <span class="flex items-center gap-1.5">
+                    <i class="fa-regular fa-calendar-check text-sm"></i> Only viewing tasks for: <span
+                        id="active-filter-date-label">Date</span>
+                </span>
+                <button id="clear-calendar-filter"
+                    class="w-6 h-6 flex items-center justify-center bg-white dark:bg-slate-800 hover:bg-slate-200 rounded-full transition-all text-slate-500">
+                    <i class="fa-solid fa-xmark text-[10px]"></i>
+                </button>
+            </div>
+
+            <!-- Main list output cards -->
+            <section class="flex flex-col gap-3" id="task-list">
+                <!-- Dynamic cards will drop here automatically from localStorage state -->
+            </section>
+
+        </main>
+
+        <!-- ==========================================
+             4. FOOTER: Quick Academic Credits
+             ========================================== -->
+        <footer
+            class="mt-auto pt-6 border-t border-slate-200/50 dark:border-slate-800/80 text-center flex flex-col gap-2">
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">© 2026 Academix. &nbsp; All Rights Reserved.
+                Academix &nbsp;|&nbsp; Manage Tasks • Stay Focused • Achieve Goals
+</p>
+            <div class="flex justify-center gap-4 text-xs font-bold text-student-600 dark:text-student-200/90">
+                <a href="#" class="hover:underline flex items-center gap-1"><i class="fa-solid fa-graduation-cap"></i>
+                    Student Resources</a>
+                <!-- <span class="text-slate-300 dark:text-slate-700">|</span>
+                <a href="#" class="hover:underline flex items-center gap-1"><i class="fa-solid fa-code"></i> Developer
+                    API</a> -->
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- ==========================================
+         5. OVERLAYS & TOASTS (No browser dialog box blocks)
+         ========================================== -->
+    <!-- Safe custom modal deletion alert box -->
+    <div class="fixed inset-0 bg-slate-950/50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200 z-50"
+        id="confirm-modal">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl max-w-sm w-full border border-slate-100 dark:border-slate-800 transform translate-y-4 transition-transform duration-200"
+            id="modal-card">
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-circle-exclamation text-rose-500"></i> Are you absolutely sure?
+            </h3>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mb-5">This action cannot be undone. Your saved progress
+                on this study task will be deleted permanently.</p>
+            <div class="flex justify-end gap-3">
+                <button
+                    class="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                    id="modal-cancel">Cancel</button>
+                <button
+                    class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+                    id="modal-confirm">Delete Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Soft toast popover notifications -->
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-24 bg-slate-900 text-slate-100 dark:bg-white dark:text-slate-900 px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2.5 text-xs font-semibold z-50 transition-all duration-300 pointer-events-none"
+        id="toast-notif">
+        <i class="fa-solid fa-circle-check text-emerald-500 text-sm" id="toast-icon"></i>
+        <span id="toast-msg">Saved Successfully!</span>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
